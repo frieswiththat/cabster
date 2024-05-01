@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { CabsterQueueStack } from '../lib/queue-stack';
 import { CabsterEcsStack } from '../lib/ecs-stack';
 import { CabsterInfraStack } from '../lib/basic-infra-stack';
 import { CabsterApiStack } from '../lib/api-stack';
@@ -25,12 +24,8 @@ const ecsStack = new CabsterEcsStack(app, 'CabsterEcsStack', {
   containerPort: 8000
 })
 
-new CabsterQueueStack(app, 'CabsterQueueStack', {
-  tripinfoTaskRole: ecsStack.tripinfoTaskRole
-});
-
 new CabsterApiStack(app, 'CabsterApiStack', {
-  loadBalancer: ecsStack.metricServiceLoadBalancer,
+  loadBalancer:ecsStack.metricServiceLoadBalancer,
   userpool: infraStack.localUserPool,
   authConfig,
 })

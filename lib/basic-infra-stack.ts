@@ -31,7 +31,7 @@ export class CabsterInfraStack extends Stack {
         {
           cidrMask: 24,
           name: 'app',
-          subnetType: SubnetType.PUBLIC,
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
         },
         {
           cidrMask: 28,
@@ -47,6 +47,10 @@ export class CabsterInfraStack extends Stack {
 
     vpc.addInterfaceEndpoint('EcrVpcEndpoint', {
       service: InterfaceVpcEndpointAwsService.ECR,
+    });
+
+    vpc.addInterfaceEndpoint('SqsVpcEndpoint', {
+      service: InterfaceVpcEndpointAwsService.SQS,
     });
 
     this.fargateSg = new SecurityGroup(this, "fargateSg", {
