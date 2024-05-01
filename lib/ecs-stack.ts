@@ -3,13 +3,14 @@ import { Construct } from 'constructs';
 import { DatabaseInstance } from 'aws-cdk-lib/aws-rds';
 import { SecurityGroup } from 'aws-cdk-lib/aws-ec2';
 import { Cluster, ContainerImage, Secret as EcsSecret } from 'aws-cdk-lib/aws-ecs';
-import { ApplicationLoadBalancedFargateService, QueueProcessingFargateService } from 'aws-cdk-lib/aws-ecs-patterns';
+import { NetworkLoadBalancedFargateService, QueueProcessingFargateService } from 'aws-cdk-lib/aws-ecs-patterns';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import path = require('path');
 import { Queue } from 'aws-cdk-lib/aws-sqs';
-import { Metric } from 'aws-cdk-lib/aws-cloudwatch';
 import { AdjustmentType, ScalableTarget, StepScalingAction } from 'aws-cdk-lib/aws-applicationautoscaling';
 import { ApplicationScalingAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
+import { IRole } from 'aws-cdk-lib/aws-iam';
+import { NetworkLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 export interface CabsterEcsStackProps extends StackProps {
   readonly ecsCluster: Cluster
@@ -19,6 +20,8 @@ export interface CabsterEcsStackProps extends StackProps {
 }
 
 export class CabsterEcsStack extends Stack {
+  tripinfoTaskRole: IRole;
+  metricServiceLoadBalancer: NetworkLoadBalancer;
 
   constructor(scope: Construct, id: string, props: CabsterEcsStackProps) {
     super(scope, id, props);
@@ -98,7 +101,7 @@ export class CabsterEcsStack extends Stack {
     ingestQueue.grantConsumeMessages(ecsTripinfoStack.taskDefinition.taskRole)
     outQueue.grantSendMessages(ecsTripinfoStack.taskDefinition.taskRole)
 
-    const ecsQueryStack = new ApplicationLoadBalancedFargateService(this, "cabster-metric-query-service", {
+    const ecsQueryStack = new NetworkLoadBalancedFargateService(this, "cabster-metric-query-service", {
       cluster: ecsCluster,
       cpu: 512,
       desiredCount: 1,
@@ -116,10 +119,12 @@ export class CabsterEcsStack extends Stack {
         },
         secrets: { "DATABASE_SECRET": EcsSecret.fromSecretsManager(pwSecret) }
       },
-      redirectHTTP: true,
     })
 
-
     ecsQueryStack.loadBalancer.addSecurityGroup(fargateSg)
+
+    this.metricServiceLoadBalancer = ecsQueryStack.loadBalancer
+
+    this.tripinfoTaskRole = ecsTripinfoStack.taskDefinition.taskRole
   }
 }

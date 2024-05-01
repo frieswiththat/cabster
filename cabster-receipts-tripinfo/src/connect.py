@@ -23,8 +23,8 @@ def connect():
         with psycopg2.connect(**pg_connection_dict) as conn:
             print('Connected to the PostgreSQL server.')
             return conn
-    except (psycopg2.DatabaseError, Exception) as error:
-        print(error)
+    except psycopg2.Error as e:
+        print("Error connecting to PostgreSQL database:", e)
 
 
 if __name__ == '__main__':

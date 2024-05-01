@@ -2,17 +2,16 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { ConnectionType, Integration, IntegrationType, ProxyResource, RestApi, VpcLink, CognitoUserPoolsAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
-import { ApplicationLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import { NetworkLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 
 export interface CabsterApiStackProps extends StackProps {
-  loadBalancer: ApplicationLoadBalancer,
+  loadBalancer: NetworkLoadBalancer,
   userpool: UserPool,
   authConfig: { oAuthName: string, oAuthScope: string }
-  vpcLink: VpcLink
 }
 
-export class CabsterInfraStack extends Stack {
+export class CabsterApiStack extends Stack {
 
   public apiGateway: RestApi
 
@@ -31,7 +30,9 @@ export class CabsterInfraStack extends Stack {
       integrationHttpMethod: "ANY",
       options: {
         connectionType: ConnectionType.VPC_LINK,
-        vpcLink: props.vpcLink,
+        vpcLink: new VpcLink(this, 'NlbVpcLink', {
+          targets: [props.loadBalancer]
+        }),
         requestParameters: {
           "integration.request.path.proxy": "method.request.path.proxy"
         }
