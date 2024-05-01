@@ -8,6 +8,6 @@ node_modules
 cdk.out
 
 # Python
-venv
-venv/**
-venv/*
+.venv
+.venv/**
+.venv/*
